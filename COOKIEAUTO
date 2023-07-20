@@ -1,0 +1,219 @@
+(function() {
+    // Interval handles
+    var autoBuyer = null;
+    var autoClicker = null;
+    var autoGoldenCookieClicker = null;
+
+    // Default speeds
+    var autoBuyerInterval = 1000;
+    var autoClickerInterval = 100;
+    var autoGoldenCookieClickerInterval = 500;
+
+    // GUI visibility
+    var isGUIVisible = true;
+
+    // GUI elements
+    var guiElements = {};
+
+    // Function to create a button
+    function createButton(text, onClick) {
+        var button = document.createElement('button');
+        button.textContent = text;
+        button.onclick = withErrorHandling(onClick);
+        button.style = 'width: 100%; margin-bottom: 5px; padding: 10px; background-color: #444; color: #fff; border: none; border-radius: 5px;';
+        return button;
+    }
+
+    // Function to create an input
+    function createInput(min, value, onChange) {
+        var input = document.createElement('input');
+        input.type = 'number';
+        input.min = min;
+        input.value = value;
+        input.onchange = withErrorHandling(onChange);
+        input.style = 'width: 100%; margin-bottom: 5px; padding: 5px;';
+        return input;
+    }
+
+    // Function to toggle GUI visibility
+    function toggleGUIVisibility() {
+        isGUIVisible = !isGUIVisible;
+        var visibility = isGUIVisible ? '' : 'none';
+        Object.values(guiElements).forEach(element => {
+            element.style.display = visibility;
+        });
+    }
+
+    // Function to create the GUI
+    function createGUI() {
+        var controlPanel = document.createElement('div');
+        controlPanel.style = 'position: fixed; bottom: 10px; right: 10px; padding: 20px; background: #333; border: 1px solid #ccc; color: #fff; font-family: Arial, sans-serif; border-radius: 10px;';
+
+        var toggleGUIButton = createButton('Toggle GUI', toggleGUIVisibility);
+        toggleGUIButton.style = 'width: 100%; margin-bottom: 10px;';
+
+        var title = document.createElement('h2');
+        title.textContent = 'Cookie Clicker Mod Menu';
+        title.style = 'text-align: center; color: #f90; margin-bottom: 20px;';
+        guiElements.title = title;
+
+        guiElements.startAutoBuyerButton = createButton('Start Auto Buyer', startAutoBuyer);
+        guiElements.stopAutoBuyerButton = createButton('Stop Auto Buyer', stopAutoBuyer);
+        guiElements.startAutoClickerButton = createButton('Start Auto Clicker', startAutoClicker);
+        guiElements.stopAutoClickerButton = createButton('Stop Auto Clicker', stopAutoClicker);
+        guiElements.startAutoGoldenCookieClickerButton = createButton('Start Auto Golden Cookie Clicker', startAutoGoldenCookieClicker);
+        guiElements.stopAutoGoldenCookieClickerButton = createButton('Stop Auto Golden Cookie Clicker', stopAutoGoldenCookieClicker);
+
+        guiElements.autoBuyerSpeedInput = createInput('100', autoBuyerInterval, function() {
+            autoBuyerInterval = guiElements.autoBuyerSpeedInput.value;
+            console.log("Auto buyer speed set to " + autoBuyerInterval + " ms");
+        });
+
+        guiElements.autoClickerSpeedInput = createInput('10', autoClickerInterval, function() {
+            autoClickerInterval = guiElements.autoClickerSpeedInput.value;
+            console.log("Auto clicker speed set to " + autoClickerInterval + " ms");
+        });
+
+        controlPanel.appendChild(toggleGUIButton);
+        controlPanel.appendChild(title);
+        Object.values(guiElements).forEach(element => {
+            controlPanel.appendChild(element);
+        });
+
+        document.body.appendChild(controlPanel);
+    }
+
+    // Function to start the auto buyer
+    function startAutoBuyer() {
+        if (autoBuyer !== null) {
+            console.log("Auto buyer is already running.");
+            return;
+        }
+
+        // Validate input
+        if (autoBuyerInterval < 100) {
+            console.log("Interval must be at least 100 ms.");
+            return;
+        }
+
+        console.log("Starting auto buyer.");
+        autoBuyer = setInterval(function() {
+            try {
+                var names = Object.keys(Game.Objects);
+                var mostExpensive = names.reduce((expensive, name) => {
+                    var building = Game.Objects[name];
+                    if (!expensive || (Game.cookies >= building.price && building.price > expensive.price)) {
+                        return building;
+                    }
+                    return expensive;
+                }, null);
+
+                if (mostExpensive !== null) {
+                    mostExpensive.buy();
+                    console.log("Bought a " + mostExpensive.name);
+                }
+            } catch (error) {
+                console.log("Error during auto buy: ", error);
+                stopAutoBuyer();
+            }
+        }, autoBuyerInterval);
+    }
+
+    // Function to stop the auto buyer
+    function stopAutoBuyer() {
+        if (autoBuyer === null) {
+            console.log("Auto buyer is not running.");
+            return;
+        }
+        console.log("Stopping auto buyer.");
+        clearInterval(autoBuyer);
+        autoBuyer = null;
+    }
+
+    // Function to start the auto clicker
+    function startAutoClicker() {
+        if (autoClicker !== null) {
+            console.log("Auto clicker is already running.");
+            return;
+        }
+
+        // Validate input
+        if (autoClickerInterval < 10) {
+            console.log("Interval must be at least 10 ms.");
+            return;
+        }
+
+        console.log("Starting auto clicker.");
+        autoClicker = setInterval(function() {
+            try {
+                Game.ClickCookie();
+            } catch (error) {
+                console.log("Error during auto click: ", error);
+                stopAutoClicker();
+            }
+        }, autoClickerInterval);
+    }
+
+    // Function to stop the auto clicker
+    function stopAutoClicker() {
+        if (autoClicker === null) {
+            console.log("Auto clicker is not running.");
+            return;
+        }
+        console.log("Stopping auto clicker.");
+        clearInterval(autoClicker);
+        autoClicker = null;
+    }
+
+    // Function to start the auto golden cookie clicker
+    function startAutoGoldenCookieClicker() {
+        if (autoGoldenCookieClicker !== null) {
+            console.log("Auto golden cookie clicker is already running.");
+            return;
+        }
+
+        // Validate input
+        if (autoGoldenCookieClickerInterval < 500) {
+            console.log("Interval must be at least 500 ms.");
+            return;
+        }
+
+        console.log("Starting auto golden cookie clicker.");
+        autoGoldenCookieClicker = setInterval(function() {
+            try {
+                var goldenCookie = Game.shimmers.find(function(shimmer) {
+                    return shimmer.type == 'golden';
+                });
+                if (goldenCookie) goldenCookie.pop();
+            } catch (error) {
+                console.log("Error during auto golden cookie click: ", error);
+                stopAutoGoldenCookieClicker();
+            }
+        }, autoGoldenCookieClickerInterval);
+    }
+
+    // Function to stop the auto golden cookie clicker
+    function stopAutoGoldenCookieClicker() {
+        if (autoGoldenCookieClicker === null) {
+            console.log("Auto golden cookie clicker is not running.");
+            return;
+        }
+        console.log("Stopping auto golden cookie clicker.");
+        clearInterval(autoGoldenCookieClicker);
+        autoGoldenCookieClicker = null;
+    }
+
+    // Function to wrap functions with error handling
+    function withErrorHandling(func) {
+        return function(...args) {
+            try {
+                func.apply(this, args);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        };
+    }
+
+    // Create the GUI when the script runs
+    createGUI();
+})();
